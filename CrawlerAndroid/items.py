@@ -26,4 +26,4 @@ class categoryItem(scrapy.Item):
  	subLink = scrapy.Field()
  	categoryId = scrapy.Field()
  	maxPage = scrapy.Field()
- 		
+ 	appNum = scrapy.Field()

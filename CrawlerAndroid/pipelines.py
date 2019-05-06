@@ -1,11 +1,36 @@
+
 # -*- coding: utf-8 -*-
 
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+from scrapy.exceptions import DropItem
+import os
+import csv
 
 
 class CrawlerandroidPipeline(object):
-    def process_item(self, item, spider):
-        return item
+
+	dup_itm = set()
+
+	#the location of csv file
+	filePath = 'xiaomi.csv' 
+
+	# open the file
+	
+	writer = csv.writer(open(filePath, 'w', newline='', encoding='utf-8-sig'))
+	#writer.writeheader("categoryName", "categoryId", "subLink", "maxPage", "appNum")
+	writer.writerow(["categoryName", "categoryId", "subLink", "maxPage", "appNum"])
+
+
+	def process_item(self, item, spider):
+		if item['categoryId'] in self.dup_itm:
+			raise DropItem("Duplicate item found: %s" % item)
+		else:
+			self.dup_itm.add(item['categoryId'])
+		#self.writer.writeheader()
+		self.writer.writerow([item['categoryName'],item['categoryId'], item['subLink'],item['maxPage'],item['appNum']])
+		return item
+
+		#return item
