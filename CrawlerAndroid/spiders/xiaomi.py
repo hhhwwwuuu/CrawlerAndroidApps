@@ -37,61 +37,58 @@ class XiaomiSpider(scrapy.Spider):
 				"pageSize": "30"
 			}
 			baseUrl = "http://app.mi.com/categotyAllListApi?"
-			yield scrapy.FormRequest(url= baseUrl,method='GET', callback=self.maxPage, formdata=formdata, dont_filter = True, meta={'item':item})
+			yield scrapy.FormRequest(url= baseUrl,method='GET', callback=self.geteachpage, formdata=formdata, dont_filter = True, meta={'item':item})
 			#print("===========================")
-			#print(item)
+			#print(item['categoryName'], item['maxPage'])
 			#print("===========================")
 
 
-	def maxPage(self,response):
+	def geteachpage(self,response):
 		jsonBody = json.loads(response.body.decode('utf-8'))
 		item = response.meta['item']
 		item['maxPage'] = math.ceil(jsonBody['count'] / 30)
 		item['appNum'] = int(jsonBody['count'])
-		print(item)
-		print("===========================")
-		return item
+		#print(item['categoryName'], item['maxPage'])
+		#print("===========================")
+		for pageNum in range(item['maxPage']):
+			formdata = {
+				"page": str(pageNum),
+				"categoryId": item['categoryId'],
+				"pageSize": "30"
+			}
+			baseUrl = "http://app.mi.com/categotyAllListApi?"
+			yield scrapy.FormRequest(url= baseUrl,method='GET', callback=self.getAppsFromPage, formdata=formdata, dont_filter = True)
+
+		
 
 
 	#divie into the detailed page for each category
 	#get the maxium page number and each link of app
-	def getCategoryPage(self, response):
-		print("===========================")
-
+	def getAppsFromPage(self, response):
+		#print("===========================")
+		#print(response.url)
 		jsonBody = json.loads(response.body.decode('utf-8'))
-		appNums = jsonBody['count']
-		maxPage = math.ceil(appNums / 30)
-		print(maxPage)
 		models = jsonBody['data']
+		item = CrawlerandroidItem()
+		#print(models)
+		baseUrl = "http://app.mi.com/details?id="
 		for each in models:
-			print(each['displayName'])
-		'''
-		item = response.meta['item']
-		#soup = BeautifulSoup(response.text, features="lxml")
-		#print(soup.prettify())
-		for each in response.xpath("//ul[@class='applist']/li/h5"):
-			link = each.xpath("a/@href").extract_first()
-			name = each.xpath("a/text()")
-			print(name, link)
+			#print(each['displayName'])
+			item['category'] = each['level1CategoryName']
+			item['name'] = each['displayName']
+			item['packName'] = each['packageName']
+			item['appId'] = each['appId']
+			#print(item['packName'])
+			yield scrapy.Request(baseUrl+item['packName'], callback = self.getAppInfo, dont_filter=True, meta={'item':item})
 
-		#item['maxPage'] 
-		#soup = BeautifulSoup(response.text, features="lxml")
-		#print(maxPage)
 		
-		for pageNum in range(maxPage):
-			url = str(response.url) + '#page=' + pageNum
-			print(url)
-			#yield scrapy.Request(url, self.getAppLink)
-
-	
-	def getAppLink(self, response):
-
-		for each in response.xpath("//ul[@id='all-applist']//li"):
-			downLink = self.baseUrl + each.xpath("a/@href").extract_first()
-			appName = each.xpath("a/img/@alt").extract_first()
-			print(appName, downLink)
-			yield scrapy.Request(downLink, self.getAppInfo)
-
 	def getAppInfo(self, response):
-		pass
-	'''
+		item = response.meta['item']
+		item['company'] = response.xpath("//div[@class='intro-titles']/p[1]/text()").extract_first()
+		item['size'] = response.xpath("//div[@class='details preventDefault']//ul[@class=' cf']/li[2]/text()").extract_first()
+		item['permissionList'] = response.xpath("//div[@class='details preventDefault']//ul[@class='second-ul']/li/text()").extract()
+		#print(item['permissionList'])
+		item['info'] = response.xpath("//div[6]/div[1]/div[4]/p/text()").extract()
+		item['downloadLink'] = response.xpath("//div[@class='app-info-down']/a/@href").extract()
+		item['detected'] = False
+		yield item

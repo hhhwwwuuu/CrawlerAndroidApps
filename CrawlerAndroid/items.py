@@ -19,6 +19,8 @@ class CrawlerandroidItem(scrapy.Item):
     permissionList = scrapy.Field()
     info = scrapy.Field()
     downloadLink = scrapy.Field()
+    detected = scrapy.Field()
+    company = scrapy.Field()
 
 class categoryItem(scrapy.Item):
  	"""docstring for categoryItem"""
