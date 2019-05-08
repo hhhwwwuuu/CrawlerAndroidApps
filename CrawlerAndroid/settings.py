@@ -81,8 +81,8 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'CrawlerAndroid.pipelines.CrawlerandroidPipeline': 300,
-    'CrawlerAndroid.pipelines.ApplicationPipeline': 400
-    #'scrapy.pipelines.images.ImagesPipeLine': 800
+    #'CrawlerAndroid.pipelines.ApplicationPipeline': 400,
+    'scrapy.pipelines.files.FilesPipeline': 1
     #'scrapy.pipelines.files.FilesPipeline': 200
 }
 FILES_STORE = 'H:\\Dataset'
